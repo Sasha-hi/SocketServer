@@ -84,31 +84,28 @@ namespace SocketServer
 
             private async Task HandleMessageAsync(string message, Stream stream, CancellationToken cancellationToken)
             {
-                string response;
+                var sb = new StringBuilder();
 
                 if (long.TryParse(message, out var number))
                 {
                     Sum += number;
-                    response = $"Sum={Sum}{Environment.NewLine}";
+                    sb.AppendLine($"Sum={Sum}");
                 }
                 else if (message.Equals(ListCommandMessage, StringComparison.Ordinal))
                 {
                     var arg = new ListEventArgs();
                     OnListCommandRequested(arg);
 
-                    var sb = new StringBuilder();
                     sb.AppendLine("Clients:");
                     arg.List.ForEach(pair => sb.AppendLine($"{pair.Key} {pair.Value}"));
-
-                    response = sb.ToString();
                 }
                 else
                 {
-                    response =
-                        $"Invalid command. Please use numbers or command ({ListCommandMessage}, {DisconnectMessage}){Environment.NewLine}";
+                    sb.AppendLine(
+                        $"Invalid command. Please use numbers or command ({ListCommandMessage}, {DisconnectMessage})");
                 }
 
-                var data = Encoding.ASCII.GetBytes(response);
+                var data = Encoding.ASCII.GetBytes(sb.ToString());
                 await stream.WriteAsync(data, 0, data.Length, cancellationToken);
             }
 
